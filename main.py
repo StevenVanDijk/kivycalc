@@ -11,7 +11,7 @@ class MainApp(App):
         return button
 
     def on_press_button(self, instance):
-        print('You pressed the button!')
+        print('You pressed the thingy!')
 
 if __name__ == '__main__':
     app = MainApp()
