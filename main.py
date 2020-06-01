@@ -9,8 +9,9 @@ from enum import Enum
 class State(Enum):
     EnteringIntegers = 1
     EnteringFloats = 2
-    Calculating = 3
-    Calculated = 4
+    CalculatingIntegers = 3
+    CalculatingFloats = 4
+    Calculated = 5
 
 class MainApp(App):
     state: State = State.EnteringIntegers
@@ -18,6 +19,7 @@ class MainApp(App):
     resultLabel: None
     memory = 0.0
     result = 0.0
+    decimal: int = 0
     lastOperator = ''
 
     def addButtons(self, widget, buttons):
@@ -40,16 +42,21 @@ class MainApp(App):
         if (self.state == State.Calculated):
             self.state = State.EnteringIntegers
             self.result = 0.0
-        self.result = self.result * 10 + num
+        if (self.state == State.EnteringIntegers or self.state == State.CalculatingIntegers):
+            self.result = self.result * 10 + num
+        elif (self.state == State.EnteringFloats or self.state == State.CalculatingFloats):
+            self.result = self.result + num * 1 / 10**self.decimal
+            self.decimal += 1
 
     def op(self, operator):
-        self.state = State.Calculating
+        if (self.state == State.EnteringIntegers): self.state = State.CalculatingIntegers
+        if (self.state == State.EnteringFloats): self.state = State.CalculatingFloats
         self.memory = self.result
         self.result = 0.0
         self.lastOperator = operator
 
     def equals(self):
-        if (self.state == State.Calculating):
+        if (self.state == State.CalculatingIntegers or self.state == State.CalculatingFloats):
             self.state = State.Calculated
             plus = self.memory + self.result
             minus = self.memory - self.result
@@ -68,6 +75,12 @@ class MainApp(App):
         self.result = 0.0
         self.lastOperator = ''
 
+    
+    def puntje(self):
+        if self.state == State.EnteringIntegers:
+            self.state = State.EnteringFloats
+            self.decimal = 1      
+    
     def build(self):
         def btn(numb):
             return lambda: self.enter(numb)
