@@ -1,0 +1,3 @@
+title=MariekeCalc
+author=Marieke van der Valk
+orientation=portrait
