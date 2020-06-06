@@ -19,8 +19,9 @@ class MainApp(App):
     resultLabel: None
     memory = 0.0
     result = 0.0
-    decimal: int = 0
     lastOperator = ''
+    isDone = False
+    decimal = 0 
 
     def addButtons(self, widget, buttons):
         for rowButtons in buttons:
@@ -43,17 +44,25 @@ class MainApp(App):
             self.state = State.EnteringIntegers
             self.result = 0.0
         if (self.state == State.EnteringIntegers or self.state == State.CalculatingIntegers):
-            self.result = self.result * 10 + num
+            if self.isDone:
+                self.result = 0.0
+                self.isDone = False
+            else:
+                self.result = self.result * 10 + num
         elif (self.state == State.EnteringFloats or self.state == State.CalculatingFloats):
             self.result = self.result + num * 1 / 10**self.decimal
             self.decimal += 1
+   
 
     def op(self, operator):
-        if (self.state == State.EnteringIntegers): self.state = State.CalculatingIntegers
-        if (self.state == State.EnteringFloats): self.state = State.CalculatingFloats
+        if (self.state == State.EnteringIntegers): 
+            self.state = State.CalculatingIntegers
+        if (self.state == State.EnteringFloats): 
+            self.state = State.CalculatingFloats
         self.memory = self.result
         self.result = 0.0
         self.lastOperator = operator
+     
 
     def equals(self):
         if (self.state == State.CalculatingIntegers or self.state == State.CalculatingFloats):
@@ -62,31 +71,50 @@ class MainApp(App):
             minus = self.memory - self.result
             times = self.memory * self.result
             division = self.memory / self.result
-            if self.lastOperator == '+': calculated = plus
-            elif self.lastOperator == '-': calculated = minus
-            elif self.lastOperator == '*': calculated = times
-            elif self.lastOperator == '/': calculated = division
+            if self.lastOperator == '+': 
+                calculated_numb = plus
+            elif self.lastOperator == '-': 
+                calculated_numb = minus
+            elif self.lastOperator == '*': 
+                calculated_numb = times
+            elif self.lastOperator == '/': 
+                calculated_numb = division      
 
+            self.isDone = True
             self.clear()
-            self.result = calculated
+            self.result = calculated_numb
+            self.memory = self.result
+        
 
     def clear(self):
         self.memory = 0.0
         self.result = 0.0
         self.lastOperator = ''
+        self.decimal = 1
+        self.state = State.CalculatingIntegers
 
     
     def puntje(self):
         if self.state == State.EnteringIntegers:
             self.state = State.EnteringFloats
-            self.decimal = 1      
+            self.decimal  
+
+        else:
+            self.state = State.EnteringFloats
+            self.decimal = 1
     
     def build(self):
+        
         def btn(numb):
+            self.result = self.memory
+            self.result = 0.0
             return lambda: self.enter(numb)
             
 
         def spc(crc):
+            self.isNext = True
+            self.result = self.memory
+            self.result = 0.0
             return lambda: self.op(crc)
 
         totalLayout = BoxLayout(orientation='vertical')
@@ -107,9 +135,6 @@ class MainApp(App):
         self.addButtons(totalLayout, buttons)
 
         return totalLayout
-
-    def on_press_button(self):
-        print('You pressed the bumba!')
 
 if __name__ == '__main__':
     app = MainApp()
