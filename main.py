@@ -12,11 +12,13 @@ class State(Enum):
     CalculatingIntegers = 3
     CalculatingFloats = 4
     Calculated = 5
+    DivisionByZeroError = 6
 
 class MainApp(App):
     state: State = State.EnteringIntegers
     memoryLabel: None
     resultLabel: None
+    stateLabel: None
     memory = 0.0
     result = 0.0
     lastOperator = ''
@@ -37,28 +39,28 @@ class MainApp(App):
     def wrapper(self, execute):
         execute()
         self.memoryLabel.text = str(self.memory)
-        self.resultLabel.text = str(self.result)
+        self.stateLabel.text = str(self.state)
+        if self.state == State.DivisionByZeroError:
+            self.resultLabel.text = "ERROR: can't divide by zero"
+        else:
+            self.resultLabel.text = str(self.result)
 
     def enter(self, num):
-        if (self.state == State.Calculated):
+        if (self.state == State.Calculated or self.state == State.DivisionByZeroError):
             self.state = State.EnteringIntegers
             self.result = 0.0
         if (self.state == State.EnteringIntegers or self.state == State.CalculatingIntegers):
             if self.isDone:
                 self.result = 0.0
                 self.isDone = False
-            else:
-                self.result = self.result * 10 + num
+            self.result = self.result * 10 + num
         elif (self.state == State.EnteringFloats or self.state == State.CalculatingFloats):
             self.result = self.result + num * 1 / 10**self.decimal
             self.decimal += 1
    
 
     def op(self, operator):
-        if (self.state == State.EnteringIntegers): 
-            self.state = State.CalculatingIntegers
-        if (self.state == State.EnteringFloats): 
-            self.state = State.CalculatingFloats
+        self.state = State.CalculatingIntegers
         self.memory = self.result
         self.result = 0.0
         self.lastOperator = operator
@@ -67,18 +69,21 @@ class MainApp(App):
     def equals(self):
         if (self.state == State.CalculatingIntegers or self.state == State.CalculatingFloats):
             self.state = State.Calculated
+            calculated_numb = 0.0
             plus = self.memory + self.result
             minus = self.memory - self.result
             times = self.memory * self.result
-            division = self.memory / self.result
             if self.lastOperator == '+': 
                 calculated_numb = plus
             elif self.lastOperator == '-': 
                 calculated_numb = minus
             elif self.lastOperator == '*': 
                 calculated_numb = times
-            elif self.lastOperator == '/': 
-                calculated_numb = division      
+            elif self.lastOperator == '/':
+                if self.result == 0:
+                    self.state = State.DivisionByZeroError
+                else: 
+                    calculated_numb = self.memory / self.result     
 
             self.isDone = True
             self.clear()
@@ -91,30 +96,21 @@ class MainApp(App):
         self.result = 0.0
         self.lastOperator = ''
         self.decimal = 1
-        self.state = State.CalculatingIntegers
-
     
     def puntje(self):
         if self.state == State.EnteringIntegers:
             self.state = State.EnteringFloats
-            self.decimal  
+        if self.state == State.CalculatingIntegers:
+            self.state = State.CalculatingFloats
 
-        else:
-            self.state = State.EnteringFloats
-            self.decimal = 1
+        self.decimal = 1
     
     def build(self):
         
         def btn(numb):
-            self.result = self.memory
-            self.result = 0.0
-            return lambda: self.enter(numb)
-            
+            return lambda: self.enter(numb)    
 
         def spc(crc):
-            self.isNext = True
-            self.result = self.memory
-            self.result = 0.0
             return lambda: self.op(crc)
 
         totalLayout = BoxLayout(orientation='vertical')
@@ -134,6 +130,8 @@ class MainApp(App):
         ]
         self.addButtons(totalLayout, buttons)
 
+        self.stateLabel = Label()
+        totalLayout.add_widget(self.stateLabel)
         return totalLayout
 
 if __name__ == '__main__':
